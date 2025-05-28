@@ -19,6 +19,8 @@
   <input id="amountBMin" placeholder="Min B (slippage)">
   <input id="to" placeholder="Recipient address">
   <input id="deadline" placeholder="Deadline (timestamp)">
+  <button onclick="approveTokenForLiquidity('tokenA')">Approve Token A</button>
+  <button onclick="approveTokenForLiquidity('tokenB')">Approve Token B</button>
   <button onclick="addLiquidity()">Add Liquidity</button>  <h2>Swap Exact Tokens</h2>
   <input id="amountIn" placeholder="Amount In (wei)">
   <input id="amountOutMin" placeholder="Min Out (wei)">
@@ -114,6 +116,16 @@
       }
     }
 
+    async function approveTokenForLiquidity(which) {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const tokenAddress = document.getElementById(which).value;
+      const token = new ethers.Contract(tokenAddress, erc20Abi, signer);
+      const amount = ethers.constants.MaxUint256;
+      const tx = await token.approve(contractAddress, amount);
+      alert(`Approve ${which} Tx Sent: ` + tx.hash);
+    }
+
     async function addLiquidity() {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
@@ -140,7 +152,6 @@
       const tokenAddress = document.getElementById("tokenFrom").value;
       const token = new ethers.Contract(tokenAddress, erc20Abi, signer);
       const amount = ethers.constants.MaxUint256;
-
       const tx = await token.approve(contractAddress, amount);
       alert("Approve Tx Sent: " + tx.hash);
     }
