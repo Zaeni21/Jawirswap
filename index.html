@@ -26,7 +26,10 @@
   <input id="tokenTo" placeholder="Token To address">
   <input id="recipient" placeholder="Recipient address">
   <input id="swapDeadline" placeholder="Deadline (timestamp)">
-  <button onclick="swapTokens()">Swap</button>  <script>
+  <button onclick="approveToken()">Approve Token</button>
+  <button onclick="simulateSwap()">Simulate Swap</button>
+  <button onclick="swapTokens()">Swap</button>
+  <p id="simResult"></p>  <script>
     const contractAddress = "0xDCd7d05640Be92EC91ceb1c9eA18e88aFf3a6900";
 
     const abi = [
@@ -58,8 +61,58 @@
           { "name": "deadline", "type": "uint256" }
         ],
         "outputs": []
+      },
+      {
+        "name": "getAmountsOut",
+        "type": "function",
+        "stateMutability": "view",
+        "inputs": [
+          { "name": "amountIn", "type": "uint256" },
+          { "name": "path", "type": "address[]" }
+        ],
+        "outputs": [
+          { "name": "amounts", "type": "uint256[]" }
+        ]
       }
     ];
+
+    const erc20Abi = [
+      {
+        "name": "approve",
+        "type": "function",
+        "stateMutability": "nonpayable",
+        "inputs": [
+          { "name": "spender", "type": "address" },
+          { "name": "amount", "type": "uint256" }
+        ],
+        "outputs": []
+      }
+    ];
+
+    const zeroGParams = {
+      chainId: '0x40D9',
+      chainName: '0G Galileo Testnet',
+      nativeCurrency: {
+        name: 'OG', symbol: 'OG', decimals: 18
+      },
+      rpcUrls: ['https://evmrpc-testnet.0g.ai'],
+      blockExplorerUrls: ['https://chainscan-test.0g.ai']
+    };
+
+    async function switchToZeroG() {
+      const provider = window.ethereum;
+      if (!provider) return alert('Metamask not found');
+      try {
+        await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: zeroGParams.chainId }] });
+      } catch (switchError) {
+        if (switchError.code === 4902) {
+          await provider.request({ method: 'wallet_addEthereumChain', params: [zeroGParams] });
+        } else {
+          console.error(switchError);
+          alert('Failed to switch network');
+        }
+      }
+    }
 
     async function addLiquidity() {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -79,6 +132,30 @@
       );
 
       alert("Add Liquidity Tx Sent: " + tx.hash);
+    }
+
+    async function approveToken() {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const tokenAddress = document.getElementById("tokenFrom").value;
+      const token = new ethers.Contract(tokenAddress, erc20Abi, signer);
+      const amount = ethers.constants.MaxUint256;
+
+      const tx = await token.approve(contractAddress, amount);
+      alert("Approve Tx Sent: " + tx.hash);
+    }
+
+    async function simulateSwap() {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, abi, signer);
+      const path = [
+        document.getElementById("tokenFrom").value,
+        document.getElementById("tokenTo").value
+      ];
+      const amountIn = document.getElementById("amountIn").value;
+      const amountsOut = await contract.getAmountsOut(amountIn, path);
+      document.getElementById("simResult").innerText = "Estimated Output: " + amountsOut[1];
     }
 
     async function swapTokens() {
@@ -102,5 +179,7 @@
 
       alert("Swap Tx Sent: " + tx.hash);
     }
+
+    window.onload = switchToZeroG;
   </script></body>
 </html>
