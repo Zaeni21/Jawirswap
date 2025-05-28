@@ -1,0 +1,106 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DEX | Add Liquidity & Swap</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    input, button { width: 100%; padding: 10px; margin-top: 10px; }
+    h2 { margin-top: 40px; }
+  </style>
+</head>
+<body>
+  <h1>DEX: Add Liquidity & Swap</h1>  <h2>Add Liquidity</h2>
+  <input id="tokenA" placeholder="Token A address">
+  <input id="tokenB" placeholder="Token B address">
+  <input id="amountADesired" placeholder="Amount A (wei)">
+  <input id="amountBDesired" placeholder="Amount B (wei)">
+  <input id="amountAMin" placeholder="Min A (slippage)">
+  <input id="amountBMin" placeholder="Min B (slippage)">
+  <input id="to" placeholder="Recipient address">
+  <input id="deadline" placeholder="Deadline (timestamp)">
+  <button onclick="addLiquidity()">Add Liquidity</button>  <h2>Swap Exact Tokens</h2>
+  <input id="amountIn" placeholder="Amount In (wei)">
+  <input id="amountOutMin" placeholder="Min Out (wei)">
+  <input id="tokenFrom" placeholder="Token From address">
+  <input id="tokenTo" placeholder="Token To address">
+  <input id="recipient" placeholder="Recipient address">
+  <input id="swapDeadline" placeholder="Deadline (timestamp)">
+  <button onclick="swapTokens()">Swap</button>  <script>
+    const contractAddress = "0xDCd7d05640Be92EC91ceb1c9eA18e88aFf3a6900";
+
+    const abi = [
+      {
+        "name": "addLiquidity",
+        "type": "function",
+        "stateMutability": "nonpayable",
+        "inputs": [
+          { "name": "tokenA", "type": "address" },
+          { "name": "tokenB", "type": "address" },
+          { "name": "amountADesired", "type": "uint256" },
+          { "name": "amountBDesired", "type": "uint256" },
+          { "name": "amountAMin", "type": "uint256" },
+          { "name": "amountBMin", "type": "uint256" },
+          { "name": "to", "type": "address" },
+          { "name": "deadline", "type": "uint256" }
+        ],
+        "outputs": []
+      },
+      {
+        "name": "swapExactTokensForTokens",
+        "type": "function",
+        "stateMutability": "nonpayable",
+        "inputs": [
+          { "name": "amountIn", "type": "uint256" },
+          { "name": "amountOutMin", "type": "uint256" },
+          { "name": "path", "type": "address[]" },
+          { "name": "to", "type": "address" },
+          { "name": "deadline", "type": "uint256" }
+        ],
+        "outputs": []
+      }
+    ];
+
+    async function addLiquidity() {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, abi, signer);
+
+      const tx = await contract.addLiquidity(
+        document.getElementById("tokenA").value,
+        document.getElementById("tokenB").value,
+        document.getElementById("amountADesired").value,
+        document.getElementById("amountBDesired").value,
+        document.getElementById("amountAMin").value,
+        document.getElementById("amountBMin").value,
+        document.getElementById("to").value,
+        document.getElementById("deadline").value
+      );
+
+      alert("Add Liquidity Tx Sent: " + tx.hash);
+    }
+
+    async function swapTokens() {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, abi, signer);
+
+      const path = [
+        document.getElementById("tokenFrom").value,
+        document.getElementById("tokenTo").value
+      ];
+
+      const tx = await contract.swapExactTokensForTokens(
+        document.getElementById("amountIn").value,
+        document.getElementById("amountOutMin").value,
+        path,
+        document.getElementById("recipient").value,
+        document.getElementById("swapDeadline").value
+      );
+
+      alert("Swap Tx Sent: " + tx.hash);
+    }
+  </script></body>
+</html>
